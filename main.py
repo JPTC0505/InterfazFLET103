@@ -1,11 +1,41 @@
 import flet as ft
 import flet_charts as fch
 from estilos import *
-from graficas import crear_grafica
+from graficas import crear_grafica, actualizar_grafica_temperatura
 from tablas import crear_panel_tabla
+from vistas import crear_vista_configuracion, crear_vista_registros, crear_vista_sensores
+from navegacion import crear_navegacion
+import random
+from pathlib import Path
 
 
 def main(page:ft.Page):
+
+    def actualizar_datos(e):
+        temperatura = round(random.uniform(45,82), 1)
+        humedad = random.randint(1, 99)
+        produccion = random.randint(55,90)
+        valor_temperatura.value=(f"{temperatura} C")
+        valor_humedad.value=(f"{humedad}%")
+        valor_produccion.value=(str(produccion))
+        actualizar_grafica_temperatura(temperaturas, serie,temperatura )
+
+
+    def cambiar_seccion(e):
+        indice = e.control.selected_index
+        area_principal.content = vistas[indice]
+
+    logo = ft.Image(
+        src = "logo.png",
+        width = 150,
+        height = 150,
+        fit = ft.BoxFit.CONTAIN
+    )
+
+    ruta_icono = Path(__file__).parent/"assets"/"app.ico"
+
+    if ruta_icono.exists():
+        page.window.icon = str(ruta_icono)
 
     page.window.width = 1200
     page.window.height = 720
@@ -41,6 +71,14 @@ def main(page:ft.Page):
 
     area_principal.content = dashboard
 
+    boton_actualizar= ft.Button(
+        content = "Actualizar",
+        icon = ft.Icons.REFRESH,
+        bgcolor = AZUL,
+        color = FONDO,
+        on_click = actualizar_datos
+    )
+
     titulo = ft.Text("Dashboard",
                      size = 30,
                      weight = ft.FontWeight.BOLD,
@@ -52,7 +90,14 @@ def main(page:ft.Page):
     encabezado = ft.Column(spacing = 3,
                            controls = [titulo, subtitulo])
 
-    dashboard.controls.append(encabezado)
+    encabezado_dashboard = ft.Row(
+        alignment = ft.MainAxisAlignment.SPACE_BETWEEN,
+        controls = [
+            encabezado,
+            boton_actualizar
+        ]
+    )
+    dashboard.controls.append(encabezado_dashboard)
 
     def crear_kpi(titulo, valor, icono, color):
         return ft.Container(
@@ -98,8 +143,15 @@ def main(page:ft.Page):
 
     panel_tabla = crear_panel_tabla(datos_registros)
     dashboard.controls.append(panel_tabla)
+    sensores = crear_vista_sensores()
+    registros = crear_vista_registros(datos_registros),
+    configuracion = crear_vista_configuracion()
+
+    vistas = [dashboard, sensores, registros, configuracion]
+    navegacion = crear_navegacion(cambiar_seccion, logo)
+    barra_lateral.content = navegacion
 
 
 
 
-ft.run(main)
+ft.run(main, assets_dir = "assets")
